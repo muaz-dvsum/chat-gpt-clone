@@ -12,7 +12,7 @@ export interface AuthResponse {
 
 export const authApi = {
   signUp: async (email: string, password: string, name?: string): Promise<AuthResponse> => {
-    const response = await apiClient.post('/auth/signup', {
+    const response = await apiClient.post('/dev-auth/signup', {
       email,
       password,
       name,
@@ -21,7 +21,7 @@ export const authApi = {
   },
 
   signIn: async (email: string, password: string): Promise<AuthResponse> => {
-    const response = await apiClient.post('/auth/signin', {
+    const response = await apiClient.post('/dev-auth/signin', {
       email,
       password,
     })

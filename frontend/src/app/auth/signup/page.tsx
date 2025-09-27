@@ -78,12 +78,12 @@ export default function SignupPage() {
             Create your account
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Or{' '}
+            Already have an account?{' '}
             <Link
               href="/auth/login"
-              className="font-medium text-indigo-600 hover:text-indigo-500"
+              className="font-medium text-blue-600 hover:text-blue-500"
             >
-              sign in to your existing account
+              Sign in here
             </Link>
           </p>
         </div>
