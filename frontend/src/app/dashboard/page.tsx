@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -16,7 +17,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { useAuth } from '@/hooks/useAuth'
 import { useChats, useStartNewChat, useDeleteChat } from '@/hooks/useChat'
 import { useChatStore } from '@/store/chat'
-import { MessageSquare, Plus, User, LogOut, Settings, Send, Trash2 } from 'lucide-react'
+import { MessageSquare, Plus, User, LogOut, Settings, Send, Trash2, Loader2 } from 'lucide-react'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 
 export default function DashboardPage() {
@@ -59,10 +60,24 @@ export default function DashboardPage() {
     }
   }
 
-  const handleNewChat = () => {
-    clearChat()
-    setNewMessage('')
-    router.push('/dashboard')
+  const handleNewChat = async () => {
+    if (startNewChatMutation.isPending || isSendingMessage) return
+    
+    const defaultMessage = 'Hello! I\'d like to start a new conversation.'
+    
+    try {
+      clearChat()
+      const result = await startNewChatMutation.mutateAsync({
+        content: defaultMessage,
+      })
+      
+      if (result?.chat) {
+        setCurrentChat(result.chat)
+        router.push(`/chat/${result.chat.id}`)
+      }
+    } catch (error) {
+      console.error('Failed to start new chat from sidebar:', error)
+    }
   }
 
   const handleDeleteChat = async (chatId: string) => {
@@ -121,10 +136,15 @@ export default function DashboardPage() {
           <div className="p-4">
             <Button 
               onClick={handleNewChat}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
+              disabled={startNewChatMutation.isPending}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white cursor-pointer disabled:opacity-50"
             >
-              <Plus className="mr-2 h-4 w-4" />
-              New Chat
+              {startNewChatMutation.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Plus className="mr-2 h-4 w-4" />
+              )}
+              {startNewChatMutation.isPending ? 'Creating...' : 'New Chat'}
             </Button>
           </div>
 
@@ -214,7 +234,7 @@ export default function DashboardPage() {
                   <Input
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="Start a new conversation..."
+                    placeholder={isSendingMessage ? "Creating your chat..." : "Start a new conversation..."}
                     disabled={isSendingMessage}
                     className="flex-1 text-lg py-6"
                     autoFocus
@@ -224,12 +244,19 @@ export default function DashboardPage() {
                     disabled={!newMessage.trim() || isSendingMessage}
                     className="bg-blue-600 hover:bg-blue-700 px-6 py-6"
                   >
-                    <Send className="h-5 w-5" />
+                    {isSendingMessage ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <Send className="h-5 w-5" />
+                    )}
                   </Button>
                 </div>
               </form>
               <p className="text-sm text-gray-500 text-center">
-                Type your message and press Send to start a new conversation
+                {isSendingMessage 
+                  ? "Creating your new chat conversation..." 
+                  : "Type your message and press Send to start a new conversation"
+                }
               </p>
             </div>
           </div>
