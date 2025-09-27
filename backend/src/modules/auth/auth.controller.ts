@@ -21,35 +21,42 @@ export class AuthController {
     // First, handle auth with Supabase (or mock)
     const authResult = await this.supabaseService.signUp(email, password, { name });
     
-    // Then create user in our database
-    try {
-      const dbUser = await this.usersService.create({
-        email,
-        name: name || email.split('@')[0],
-        supabaseId: authResult.user.id,
-        avatar: (authResult.user.user_metadata as any)?.avatar_url,
-      });
-
-      return {
-        success: true,
-        data: {
-          ...authResult,
-          user: {
-            ...authResult.user,
-            dbId: dbUser._id.toString(),
-          },
-        },
-      };
-    } catch (error) {
-      // If user already exists in DB, just return the auth result
-      if (error.message?.includes('already exists')) {
-        return {
-          success: true,
-          data: authResult,
-        };
+    // Find or create user in our database
+    let dbUser = await this.usersService.findBySupabaseId(authResult.user.id);
+    
+    if (!dbUser) {
+      // Create new user
+      try {
+        dbUser = await this.usersService.create({
+          email,
+          name: name || email.split('@')[0],
+          supabaseId: authResult.user.id,
+          avatar: (authResult.user.user_metadata as any)?.avatar_url,
+        });
+      } catch (error) {
+        // If race condition occurred, try to find the user again
+        if (error.message?.includes('already exists')) {
+          dbUser = await this.usersService.findBySupabaseId(authResult.user.id);
+          if (!dbUser) {
+            throw new Error('Failed to create or find user');
+          }
+        } else {
+          throw error;
+        }
       }
-      throw error;
     }
+
+    return {
+      success: true,
+      data: {
+        ...authResult,
+        user: {
+          ...authResult.user,
+          dbId: dbUser._id.toString(),
+          name: dbUser.name,
+        },
+      },
+    };
   }
 
   @Post('signin')
@@ -63,15 +70,41 @@ export class AuthController {
     // Handle auth with Supabase (or mock)
     const authResult = await this.supabaseService.signIn(email, password);
     
-    // Find or create user in our database
+    // Find existing user in our database (try by supabaseId first, then by email)
     let dbUser = await this.usersService.findBySupabaseId(authResult.user.id);
+    
     if (!dbUser) {
-      dbUser = await this.usersService.create({
-        email: authResult.user.email,
-        name: (authResult.user.user_metadata as any)?.name || email.split('@')[0],
-        supabaseId: authResult.user.id,
-        avatar: (authResult.user.user_metadata as any)?.avatar_url,
-      });
+      // Try finding by email (for development mode consistency)
+      dbUser = await this.usersService.findByEmail(email);
+    }
+    
+    if (!dbUser) {
+      // In development mode, auto-create user on signin
+      const isDevelopmentMode = authResult.user.id.startsWith('dev-user-');
+      
+      if (isDevelopmentMode) {
+        try {
+          dbUser = await this.usersService.create({
+            email: authResult.user.email,
+            name: (authResult.user.user_metadata as any)?.name || email.split('@')[0],
+            supabaseId: authResult.user.id,
+            avatar: (authResult.user.user_metadata as any)?.avatar_url,
+          });
+        } catch (error) {
+          // If user creation fails, try finding again (race condition)
+          if (error.message?.includes('already exists')) {
+            dbUser = await this.usersService.findByEmail(email);
+            if (!dbUser) {
+              throw new Error('Failed to create or find user');
+            }
+          } else {
+            throw error;
+          }
+        }
+      } else {
+        // Production mode - user must exist
+        throw new Error('User not found. Please sign up first.');
+      }
     }
 
     return {
@@ -81,6 +114,7 @@ export class AuthController {
         user: {
           ...authResult.user,
           dbId: dbUser._id.toString(),
+          name: dbUser.name,
         },
       },
     };

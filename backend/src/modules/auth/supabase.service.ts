@@ -95,18 +95,22 @@ export class SupabaseService {
 
   async signUp(email: string, password: string, metadata?: Record<string, any>) {
     if (!this.supabase) {
-      // Development mode - return mock response
+      // Development mode - create consistent user ID based on email
       this.logger.log('Development mode: Mock sign up for', email);
+      const userId = 'dev-user-' + Buffer.from(email).toString('base64').substring(0, 10);
+      
       return {
         user: {
-          id: 'dev-user-' + Date.now(),
+          id: userId,
           email,
           user_metadata: metadata || {},
+          app_metadata: {},
+          aud: 'authenticated',
           created_at: new Date().toISOString(),
         },
         session: {
-          access_token: 'dev-token-' + Date.now(),
-          refresh_token: 'dev-refresh-' + Date.now(),
+          access_token: 'dev-token-' + userId + '-' + Date.now(),
+          refresh_token: 'dev-refresh-' + userId + '-' + Date.now(),
           expires_in: 3600,
         },
       };
@@ -135,18 +139,22 @@ export class SupabaseService {
 
   async signIn(email: string, password: string) {
     if (!this.supabase) {
-      // Development mode - return mock response
+      // Development mode - create consistent user ID based on email
       this.logger.log('Development mode: Mock sign in for', email);
+      const userId = 'dev-user-' + Buffer.from(email).toString('base64').substring(0, 10);
+      
       return {
         user: {
-          id: 'dev-user-signin',
+          id: userId,
           email,
-          user_metadata: { name: 'Dev User' },
+          user_metadata: { name: email.split('@')[0] },
+          app_metadata: {},
+          aud: 'authenticated',
           created_at: new Date().toISOString(),
         },
         session: {
-          access_token: 'dev-token-signin-' + Date.now(),
-          refresh_token: 'dev-refresh-signin-' + Date.now(),
+          access_token: 'dev-token-' + userId + '-' + Date.now(),
+          refresh_token: 'dev-refresh-' + userId + '-' + Date.now(),
           expires_in: 3600,
         },
       };
