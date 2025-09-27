@@ -1,7 +1,6 @@
 import axios from 'axios'
-import { supabase } from '@/lib/auth/supabase'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'
 
 // Create axios instance
 export const apiClient = axios.create({
@@ -13,10 +12,10 @@ export const apiClient = axios.create({
 
 // Add auth token to requests
 apiClient.interceptors.request.use(async (config) => {
-  const { data: { session } } = await supabase.auth.getSession()
+  const token = localStorage.getItem('access_token')
   
-  if (session?.access_token) {
-    config.headers.Authorization = `Bearer ${session.access_token}`
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
   }
   
   return config
