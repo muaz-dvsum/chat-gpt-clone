@@ -14,15 +14,15 @@ export class LlmService {
   private readonly maxDelay: number;
 
   constructor(private readonly configService: ConfigService) {
-    this.minDelay = this.configService.get<number>('llm.minDelay', 2000);
-    this.maxDelay = this.configService.get<number>('llm.maxDelay', 5000);
+    this.minDelay = this.configService.get<number>('llm.minDelay', 1000);
+    this.maxDelay = this.configService.get<number>('llm.maxDelay', 1000);
   }
 
   async generateResponse(userMessage: string): Promise<LLMResponse> {
     const startTime = Date.now();
     
-    // Simulate random delay between 10-20 seconds
-    const delay = Math.floor(Math.random() * (this.maxDelay - this.minDelay + 1)) + this.minDelay;
+    // Simulate fast 1-second delay for better UX
+    const delay = 1000;
     
     this.logger.log(`Simulating LLM processing for ${delay}ms for message: "${userMessage.substring(0, 50)}..."`);
     
@@ -77,8 +77,8 @@ export class LlmService {
   }
 
   async generateTitle(firstMessage: string): Promise<string> {
-    // Simulate a shorter delay for title generation
-    const delay = Math.floor(Math.random() * 2000) + 1000; // 1-3 seconds
+    // Simulate fast delay for title generation
+    const delay = 500; // 0.5 seconds
     await this.simulateAsyncProcessing(delay);
     
     // Generate a simple title based on the first message

@@ -134,22 +134,32 @@ export const useSendMessage = (chatId: string) => {
 
 export const useStartNewChat = () => {
   const queryClient = useQueryClient()
-  const { addChat, addMessage, setSendingMessage } = useChatStore()
+  const { addChat, addMessage, setSendingMessage, clearMessages } = useChatStore()
 
   return useMutation({
     mutationFn: async (data: SendMessageDto) => {
       setSendingMessage(true)
+      clearMessages() // Clear existing messages first
       
       try {
         // Start new chat with first message
         const response = await messageApi.startNewChat(data)
         
         // Add the new chat and messages to store immediately
-        addChat(response.chat)
-        addMessage(response.userMessage)
-        addMessage(response.assistantMessage)
+        if (response.chat) {
+          addChat(response.chat)
+        }
+        if (response.userMessage) {
+          addMessage(response.userMessage)
+        }
+        if (response.assistantMessage) {
+          addMessage(response.assistantMessage)
+        }
         
         return response
+      } catch (error) {
+        console.error('Failed to start new chat:', error)
+        throw error
       } finally {
         setSendingMessage(false)
       }
@@ -167,10 +177,15 @@ export const useStartNewChat = () => {
 
 export const useDeleteChat = () => {
   const queryClient = useQueryClient()
+  const { clearChat, currentChat } = useChatStore()
 
   return useMutation({
     mutationFn: (chatId: string) => chatApi.deleteChat(chatId),
-    onSuccess: () => {
+    onSuccess: (_, chatId) => {
+      // Clear current chat if it was deleted
+      if (currentChat?.id === chatId) {
+        clearChat()
+      }
       queryClient.invalidateQueries({ queryKey: ['chats'] })
     },
   })

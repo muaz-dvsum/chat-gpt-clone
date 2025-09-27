@@ -14,18 +14,20 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useAuth } from '@/hooks/useAuth'
-import { useChats, useStartNewChat } from '@/hooks/useChat'
+import { useChats, useStartNewChat, useDeleteChat } from '@/hooks/useChat'
 import { useChatStore } from '@/store/chat'
-import { MessageSquare, Plus, User, LogOut, Settings, Send } from 'lucide-react'
+import { MessageSquare, Plus, User, LogOut, Settings, Send, Trash2 } from 'lucide-react'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 
 export default function DashboardPage() {
   const { user, signOut } = useAuth()
   const { data: chats, isLoading: isLoadingChats } = useChats()
   const startNewChatMutation = useStartNewChat()
+  const deleteChatMutation = useDeleteChat()
   const { currentChat, setCurrentChat, clearChat, isSendingMessage } = useChatStore()
   const router = useRouter()
   const [newMessage, setNewMessage] = useState('')
+  const [hoveredChatId, setHoveredChatId] = useState<string | null>(null)
 
   const handleStartNewChat = async () => {
     if (!newMessage.trim() || isSendingMessage) return
@@ -54,6 +56,20 @@ export default function DashboardPage() {
     if (selectedChat) {
       setCurrentChat(selectedChat)
       router.push(`/chat/${chatId}`)
+    }
+  }
+
+  const handleNewChat = () => {
+    clearChat()
+    setNewMessage('')
+    router.push('/dashboard')
+  }
+
+  const handleDeleteChat = async (chatId: string) => {
+    try {
+      await deleteChatMutation.mutateAsync(chatId)
+    } catch (error) {
+      console.error('Failed to delete chat:', error)
     }
   }
 
@@ -104,10 +120,7 @@ export default function DashboardPage() {
           {/* New Chat */}
           <div className="p-4">
             <Button 
-              onClick={() => {
-                clearChat()
-                router.push('/dashboard')
-              }}
+              onClick={handleNewChat}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
             >
               <Plus className="mr-2 h-4 w-4" />
@@ -128,21 +141,40 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 chats?.map((chat) => (
-                  <Button
+                  <div
                     key={chat.id}
-                    variant="ghost"
-                    className={`w-full justify-start text-left p-3 h-auto text-gray-700 hover:bg-gray-100 cursor-pointer ${
-                      currentChat?.id === chat.id 
-                        ? 'bg-gray-100 border-r-2 border-blue-600' 
-                        : ''
-                    }`}
-                    onClick={() => handleChatSelect(chat.id)}
+                    className="relative group"
+                    onMouseEnter={() => setHoveredChatId(chat.id)}
+                    onMouseLeave={() => setHoveredChatId(null)}
                   >
-                    <MessageSquare className="mr-3 h-4 w-4 text-gray-500" />
-                    <div className="truncate text-sm">
-                      {chat.title}
-                    </div>
-                  </Button>
+                    <Button
+                      variant="ghost"
+                      className={`w-full justify-start text-left p-3 h-auto text-gray-700 hover:bg-gray-100 cursor-pointer ${
+                        currentChat?.id === chat.id 
+                          ? 'bg-gray-100 border-r-2 border-blue-600' 
+                          : ''
+                      }`}
+                      onClick={() => handleChatSelect(chat.id)}
+                    >
+                      <MessageSquare className="mr-3 h-4 w-4 text-gray-500" />
+                      <div className="truncate text-sm pr-8">
+                        {chat.title}
+                      </div>
+                    </Button>
+                    {hoveredChatId === chat.id && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeleteChat(chat.id)
+                        }}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
                 ))
               )}
             </div>

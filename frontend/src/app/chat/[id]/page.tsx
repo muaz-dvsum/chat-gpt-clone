@@ -143,14 +143,7 @@ export default function ChatPage() {
                       }`}
                     >
                       <div className="whitespace-pre-wrap">
-                        {message.content === '...' || message.content === 'AI is thinking...' ? (
-                          <div className="flex items-center gap-2">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            <span className="text-sm">AI is thinking...</span>
-                          </div>
-                        ) : (
-                          message.content
-                        )}
+                        {message.content}
                       </div>
                       <div
                         className={`text-xs mt-2 ${
