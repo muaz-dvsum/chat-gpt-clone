@@ -63,33 +63,65 @@ export const useCreateChat = () => {
 
 export const useSendMessage = (chatId: string) => {
   const queryClient = useQueryClient()
-  const { addMessage, setSendingMessage } = useChatStore()
+  const { addMessage, replaceMessage, setSendingMessage } = useChatStore()
 
   return useMutation({
     mutationFn: async (data: SendMessageDto) => {
       setSendingMessage(true)
       
-      // Add user message immediately
+      // Add user message immediately for real-time feel
       const userMessage: Message = {
-        id: `temp-${Date.now()}`,
+        id: `temp-user-${Date.now()}`,
         chatId,
         content: data.content,
         role: 'user',
         createdAt: new Date(),
       }
       addMessage(userMessage)
+      
+      // Add pending assistant message with typing indicator
+      const pendingId = `temp-assistant-${Date.now()}`
+      const pendingAssistantMessage: Message = {
+        id: pendingId,
+        chatId,
+        content: 'AI is thinking...',
+        role: 'assistant',
+        createdAt: new Date(),
+      }
+      addMessage(pendingAssistantMessage)
 
       try {
-        // Send message to backend (this will trigger AI response)
-        const response = await messageApi.sendMessage(chatId, data)
-        return response
+        // Send message to backend and get assistant response
+        const assistantMessage = await messageApi.sendMessage(chatId, data)
+        
+        // Replace the temporary user message with the real one from backend
+        replaceMessage(userMessage.id, assistantMessage.chatId ? { 
+          id: `user-${Date.now()}`,
+          chatId,
+          content: data.content,
+          role: 'user' as const,
+          createdAt: new Date(),
+        } : userMessage)
+        
+        return { assistantMessage, pendingId }
+      } catch (error) {
+        // Remove pending message on error
+        replaceMessage(pendingId, {
+          id: pendingId,
+          chatId,
+          content: 'Sorry, I encountered an error. Please try again.',
+          role: 'assistant',
+          createdAt: new Date(),
+        })
+        throw error
       } finally {
         setSendingMessage(false)
       }
     },
-    onSuccess: (response) => {
-      // Add AI response message
-      addMessage(response)
+    onSuccess: (result) => {
+      // Replace pending assistant message with actual response
+      const { assistantMessage, pendingId } = result
+      replaceMessage(pendingId, assistantMessage)
       queryClient.invalidateQueries({ queryKey: ['messages', chatId] })
       queryClient.invalidateQueries({ queryKey: ['chats'] })
     },
@@ -100,12 +132,60 @@ export const useSendMessage = (chatId: string) => {
   })
 }
 
+export const useStartNewChat = () => {
+  const queryClient = useQueryClient()
+  const { addChat, addMessage, setSendingMessage, clearMessages } = useChatStore()
+
+  return useMutation({
+    mutationFn: async (data: SendMessageDto) => {
+      setSendingMessage(true)
+      clearMessages() // Clear existing messages first
+      
+      try {
+        // Start new chat with first message
+        const response = await messageApi.startNewChat(data)
+        
+        // Add the new chat and messages to store immediately
+        if (response.chat) {
+          addChat(response.chat)
+        }
+        if (response.userMessage) {
+          addMessage(response.userMessage)
+        }
+        if (response.assistantMessage) {
+          addMessage(response.assistantMessage)
+        }
+        
+        return response
+      } catch (error) {
+        console.error('Failed to start new chat:', error)
+        throw error
+      } finally {
+        setSendingMessage(false)
+      }
+    },
+    onSuccess: (response) => {
+      // Invalidate queries to refresh UI
+      queryClient.invalidateQueries({ queryKey: ['chats'] })
+    },
+    onError: (error) => {
+      setSendingMessage(false)
+      console.error('Failed to start new chat:', error)
+    },
+  })
+}
+
 export const useDeleteChat = () => {
   const queryClient = useQueryClient()
+  const { clearChat, currentChat } = useChatStore()
 
   return useMutation({
     mutationFn: (chatId: string) => chatApi.deleteChat(chatId),
-    onSuccess: () => {
+    onSuccess: (_, chatId) => {
+      // Clear current chat if it was deleted
+      if (currentChat?.id === chatId) {
+        clearChat()
+      }
       queryClient.invalidateQueries({ queryKey: ['chats'] })
     },
   })

@@ -32,10 +32,7 @@ export class MessagesController {
     const result = await this.messagesService.sendMessage(chatId, req.user.id, createMessageDto);
     return {
       success: true,
-      data: {
-        userMessage: result.userMessage,
-        assistantMessage: result.assistantMessage,
-      },
+      data: result.assistantMessage, // Return only assistant message since user message is added immediately on frontend
     };
   }
 

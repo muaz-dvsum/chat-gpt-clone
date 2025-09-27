@@ -9,7 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { useAuth } from '@/hooks/useAuth'
 import { useMessages, useSendMessage } from '@/hooks/useChat'
 import { useChatStore } from '@/store/chat'
-import { Send, ArrowLeft, Bot, User, Loader2 } from 'lucide-react'
+import { Send, ArrowLeft, Bot, User, Loader2, LogOut } from 'lucide-react'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { format } from 'date-fns'
 
@@ -17,10 +17,20 @@ export default function ChatPage() {
   const params = useParams()
   const router = useRouter()
   const chatId = params.id as string
-  const { user } = useAuth()
-  const { data: messages, isLoading: isLoadingMessages } = useMessages(chatId)
+  const { user, signOut } = useAuth()
+  const { data: apiMessages, isLoading: isLoadingMessages } = useMessages(chatId)
   const sendMessageMutation = useSendMessage(chatId)
-  const { currentChat, isSendingMessage } = useChatStore()
+  const { currentChat, isSendingMessage, messages: storeMessages, clearMessages } = useChatStore()
+  
+  // Clear store messages when switching chats
+  useEffect(() => {
+    if (apiMessages && apiMessages.length > 0) {
+      clearMessages()
+    }
+  }, [chatId, clearMessages])
+  
+  // Use store messages if available, fallback to API messages
+  const messages = storeMessages.length > 0 ? storeMessages.filter(msg => msg.chatId === chatId) : apiMessages
   const [messageText, setMessageText] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -54,6 +64,14 @@ export default function ChatPage() {
     router.push('/dashboard')
   }
 
+  const handleLogout = async () => {
+    try {
+      await signOut()
+    } catch (error) {
+      console.error('Failed to logout:', error)
+    }
+  }
+
   if (!chatId) {
     return <div>Invalid chat ID</div>
   }
@@ -64,17 +82,30 @@ export default function ChatPage() {
         {/* Chat Interface */}
         <div className="flex-1 flex flex-col">
           {/* Header */}
-          <div className="border-b border-gray-200 p-4 flex items-center gap-4">
+          <div className="bg-white border-b border-gray-200 p-4 flex items-center justify-between shadow-sm">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleBackToDashboard}
+                className="hover:bg-gray-100"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <h1 className="text-lg font-semibold text-gray-900">
+                {currentChat?.title || 'Chat'}
+              </h1>
+            </div>
+            
             <Button
               variant="ghost"
               size="sm"
-              onClick={handleBackToDashboard}
+              onClick={handleLogout}
+              className="text-red-600 hover:bg-red-50 hover:text-red-700"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
             </Button>
-            <h1 className="text-lg font-semibold">
-              {currentChat?.title || 'Chat'}
-            </h1>
           </div>
 
           {/* Messages */}
