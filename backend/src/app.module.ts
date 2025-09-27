@@ -7,6 +7,7 @@ import { ChatsModule } from './modules/chats/chats.module';
 import { MessagesModule } from './modules/messages/messages.module';
 import { LlmModule } from './modules/llm/llm.module';
 import { HealthModule } from './modules/health/health.module';
+import { DebugModule } from './modules/debug/debug.module';
 import configuration from './config/configuration';
 
 @Module({
@@ -31,6 +32,7 @@ import configuration from './config/configuration';
     MessagesModule,
     LlmModule,
     HealthModule,
+    DebugModule,
   ],
   controllers: [],
   providers: [],

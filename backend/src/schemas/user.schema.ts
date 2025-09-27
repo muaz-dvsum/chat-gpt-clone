@@ -23,10 +23,13 @@ export class User {
   name: string;
 
   @Prop()
+  password?: string;
+
+  @Prop()
   avatar?: string;
 
-  @Prop({ required: true })
-  supabaseId: string;
+  @Prop()
+  supabaseId?: string;
 
   @Prop({ default: true })
   isActive: boolean;

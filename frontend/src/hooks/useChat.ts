@@ -1,13 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { chatApi, messageApi } from '@/lib/api/chat'
 import { useChatStore } from '@/store/chat'
+import { useAuth } from '@/hooks/useAuth'
 import { Chat, Message, CreateChatDto, SendMessageDto } from '@/types'
 
 export const useChats = () => {
   const { setChats, setLoadingChats } = useChatStore()
+  const { user, isAuthenticated } = useAuth()
 
   return useQuery({
-    queryKey: ['chats'],
+    queryKey: ['chats', user?.id],
     queryFn: async () => {
       setLoadingChats(true)
       try {
@@ -18,22 +20,26 @@ export const useChats = () => {
         setLoadingChats(false)
       }
     },
+    enabled: isAuthenticated && !!user?.id,
   })
 }
 
 export const useChat = (chatId: string) => {
+  const { user, isAuthenticated } = useAuth()
+  
   return useQuery({
-    queryKey: ['chat', chatId],
+    queryKey: ['chat', chatId, user?.id],
     queryFn: () => chatApi.getChat(chatId),
-    enabled: !!chatId,
+    enabled: !!chatId && isAuthenticated && !!user?.id,
   })
 }
 
 export const useMessages = (chatId: string) => {
   const { setMessages, setLoadingMessages } = useChatStore()
+  const { user, isAuthenticated } = useAuth()
 
   return useQuery({
-    queryKey: ['messages', chatId],
+    queryKey: ['messages', chatId, user?.id],
     queryFn: async () => {
       setLoadingMessages(true)
       try {
@@ -44,19 +50,20 @@ export const useMessages = (chatId: string) => {
         setLoadingMessages(false)
       }
     },
-    enabled: !!chatId,
+    enabled: !!chatId && isAuthenticated && !!user?.id,
   })
 }
 
 export const useCreateChat = () => {
   const queryClient = useQueryClient()
   const { addChat } = useChatStore()
+  const { user } = useAuth()
 
   return useMutation({
     mutationFn: (data: CreateChatDto) => chatApi.createChat(data),
     onSuccess: (newChat) => {
       addChat(newChat)
-      queryClient.invalidateQueries({ queryKey: ['chats'] })
+      queryClient.invalidateQueries({ queryKey: ['chats', user?.id] })
     },
   })
 }

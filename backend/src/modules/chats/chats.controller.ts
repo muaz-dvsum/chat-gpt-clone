@@ -12,10 +12,10 @@ import {
 } from '@nestjs/common';
 import { ChatsService } from './chats.service';
 import { CreateChatDto, UpdateChatDto, ChatQueryDto } from './dto/chat.dto';
-import { AuthGuard } from '../auth/auth.guard';
+import { MongoAuthGuard } from '../auth/mongo-auth.guard';
 
 @Controller('chats')
-@UseGuards(AuthGuard)
+@UseGuards(MongoAuthGuard)
 export class ChatsController {
   constructor(private readonly chatsService: ChatsService) {}
 

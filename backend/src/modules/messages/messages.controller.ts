@@ -13,10 +13,10 @@ import {
 import { MessagesService } from './messages.service';
 import { ChatsService } from '../chats/chats.service';
 import { CreateMessageDto, UpdateMessageDto, MessageQueryDto } from './dto/message.dto';
-import { AuthGuard } from '../auth/auth.guard';
+import { MongoAuthGuard } from '../auth/mongo-auth.guard';
 
 @Controller('chats/:chatId/messages')
-@UseGuards(AuthGuard)
+@UseGuards(MongoAuthGuard)
 export class MessagesController {
   constructor(
     private readonly messagesService: MessagesService,
@@ -95,7 +95,7 @@ export class MessagesController {
 
 // Separate controller for starting new chats
 @Controller('messages')
-@UseGuards(AuthGuard)
+@UseGuards(MongoAuthGuard)
 export class NewChatController {
   constructor(
     private readonly messagesService: MessagesService,

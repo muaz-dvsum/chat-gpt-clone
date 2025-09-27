@@ -111,9 +111,9 @@ export default function DashboardPage() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="text-gray-700 hover:bg-gray-100 cursor-pointer">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={user?.user_metadata?.avatar_url} />
+                      <AvatarImage src={user?.avatar} />
                       <AvatarFallback className="bg-blue-600 text-white font-medium">
-                        {user?.user_metadata?.name?.[0] || user?.email?.[0]?.toUpperCase()}
+                        {user?.name?.[0] || user?.email?.[0]?.toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                   </Button>

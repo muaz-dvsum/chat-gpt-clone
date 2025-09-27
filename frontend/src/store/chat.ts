@@ -21,6 +21,7 @@ interface ChatState {
   addChat: (chat: Chat) => void
   clearChat: () => void
   clearMessages: () => void
+  clearAll: () => void
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -51,4 +52,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
     messages: [] 
   }),
   clearMessages: () => set({ messages: [] }),
+  clearAll: () => set({
+    chats: [],
+    currentChat: null,
+    messages: [],
+    isLoadingChats: false,
+    isLoadingMessages: false,
+    isSendingMessage: false
+  }),
 }))

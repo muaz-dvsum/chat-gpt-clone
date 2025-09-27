@@ -3,16 +3,32 @@ import { apiClient } from './client'
 export interface AuthResponse {
   success: boolean
   data: {
-    user?: any
-    session?: any
+    user?: {
+      id: string
+      email: string
+      name: string
+      avatar?: string
+      isActive: boolean
+      createdAt: string
+      lastLoginAt?: string
+    }
+    session?: {
+      access_token: string
+      refresh_token: string
+      expires_in: number
+      token_type: string
+    }
     access_token?: string
     refresh_token?: string
+    expires_in?: number
+    token_type?: string
   }
+  message?: string
 }
 
 export const authApi = {
   signUp: async (email: string, password: string, name?: string): Promise<AuthResponse> => {
-    const response = await apiClient.post('/dev-auth/signup', {
+    const response = await apiClient.post('/auth/signup', {
       email,
       password,
       name,
@@ -21,7 +37,7 @@ export const authApi = {
   },
 
   signIn: async (email: string, password: string): Promise<AuthResponse> => {
-    const response = await apiClient.post('/dev-auth/signin', {
+    const response = await apiClient.post('/auth/signin', {
       email,
       password,
     })
@@ -41,12 +57,12 @@ export const authApi = {
   },
 
   getProfile: async (): Promise<AuthResponse> => {
-    const response = await apiClient.get('/dev-auth/me')
+    const response = await apiClient.get('/auth/me')
     return response.data
   },
 
   signOut: async (): Promise<AuthResponse> => {
-    const response = await apiClient.post('/dev-auth/logout')
+    const response = await apiClient.post('/auth/logout')
     return response.data
   },
 }

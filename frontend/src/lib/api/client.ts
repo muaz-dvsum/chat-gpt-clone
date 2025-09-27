@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'
 
 // Create axios instance
 export const apiClient = axios.create({
@@ -21,14 +21,42 @@ apiClient.interceptors.request.use(async (config) => {
   return config
 })
 
-// Handle auth errors
+// Handle auth errors and token refresh
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response?.status === 401) {
-      // Redirect to login on auth error
+    const originalRequest = error.config
+    
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true
+      
+      try {
+        const refreshToken = localStorage.getItem('refresh_token')
+        if (refreshToken) {
+          const response = await axios.post(`${API_URL}/auth/refresh`, {
+            refresh_token: refreshToken
+          })
+          
+          if (response.data.success) {
+            const { access_token, refresh_token } = response.data.data
+            localStorage.setItem('access_token', access_token)
+            localStorage.setItem('refresh_token', refresh_token)
+            
+            // Retry original request with new token
+            originalRequest.headers.Authorization = `Bearer ${access_token}`
+            return apiClient(originalRequest)
+          }
+        }
+      } catch (refreshError) {
+        console.error('Token refresh failed:', refreshError)
+      }
+      
+      // If refresh fails, clear tokens and redirect to login
+      localStorage.removeItem('access_token')
+      localStorage.removeItem('refresh_token')
       window.location.href = '/auth/login'
     }
+    
     return Promise.reject(error)
   }
 )

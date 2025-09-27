@@ -11,7 +11,8 @@ export default () => ({
   },
   jwt: {
     secret: process.env.JWT_SECRET || 'your-jwt-secret',
-    expiresIn: process.env.JWT_EXPIRES_IN || '24h',
+    expiresIn: process.env.JWT_EXPIRES_IN || '1h',
+    refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
   },
   llm: {
     minDelay: parseInt(process.env.LLM_MIN_DELAY, 10) || 10000,

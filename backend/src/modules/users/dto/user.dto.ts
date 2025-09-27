@@ -10,8 +10,12 @@ export class CreateUserDto {
   name: string;
 
   @IsString()
-  @IsNotEmpty()
-  supabaseId: string;
+  @IsOptional()
+  password?: string;
+
+  @IsString()
+  @IsOptional()
+  supabaseId?: string;
 
   @IsUrl()
   @IsOptional()
@@ -22,6 +26,10 @@ export class UpdateUserDto {
   @IsString()
   @IsOptional()
   name?: string;
+
+  @IsString()
+  @IsOptional()
+  password?: string;
 
   @IsUrl()
   @IsOptional()

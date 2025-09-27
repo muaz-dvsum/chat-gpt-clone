@@ -1,13 +1,12 @@
-import { User as SupabaseUser } from '@supabase/supabase-js'
-
 export interface User {
   id: string
   email: string
   name: string
   avatar?: string
-  supabaseId: string
-  createdAt: Date
-  updatedAt: Date
+  isActive: boolean
+  createdAt: string
+  updatedAt?: string
+  lastLoginAt?: string
 }
 
 export interface Chat {
@@ -27,11 +26,15 @@ export interface Message {
   createdAt: Date
 }
 
-export interface AuthUser extends SupabaseUser {
-  user_metadata: {
-    name?: string
-    avatar_url?: string
-  } & Record<string, any>
+export interface AuthUser {
+  id: string
+  email: string
+  name: string
+  avatar?: string
+  isActive: boolean
+  createdAt: string
+  lastLoginAt?: string
+  updatedAt?: string
 }
 
 export interface CreateChatDto {
