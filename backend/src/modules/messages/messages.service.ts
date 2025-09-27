@@ -53,25 +53,45 @@ export class MessagesService {
     userMessage: string
   ): Promise<MessageDocument> {
     try {
-      // Create pending assistant message
-      const pendingMessage = new this.messageModel({
+      // Generate AI response synchronously for better UX
+      this.logger.log(`Generating AI response for message: "${userMessage.substring(0, 50)}..."`);
+      const llmResponse = await this.llmService.generateResponse(userMessage);
+
+      // Create assistant message with the generated response
+      const assistantMessage = new this.messageModel({
         chatId: new Types.ObjectId(chatId),
         userId: new Types.ObjectId(userId),
-        content: '',
+        content: llmResponse.content,
         role: MessageRole.ASSISTANT,
-        status: MessageStatus.PENDING,
+        status: MessageStatus.COMPLETED,
+        tokenCount: llmResponse.tokenCount,
+        processedAt: new Date(),
+        metadata: {
+          processingTime: llmResponse.processingTime,
+        },
       });
 
-      const savedPendingMessage = await pendingMessage.save();
-      this.logger.log(`Pending assistant message created: ${savedPendingMessage.id}`);
+      const savedMessage = await assistantMessage.save();
+      this.logger.log(`Assistant message created: ${savedMessage.id}`);
 
-      // Generate AI response asynchronously
-      this.generateAssistantResponse(savedPendingMessage.id.toString(), userMessage);
+      // Update chat message count
+      await this.chatsService.updateMessageCount(chatId);
 
-      return savedPendingMessage;
+      return savedMessage;
     } catch (error) {
       this.logger.error('Error creating assistant message:', error);
-      throw error;
+      
+      // Create failed message instead of throwing
+      const failedMessage = new this.messageModel({
+        chatId: new Types.ObjectId(chatId),
+        userId: new Types.ObjectId(userId),
+        content: 'I apologize, but I encountered an error while processing your request. Please try again.',
+        role: MessageRole.ASSISTANT,
+        status: MessageStatus.FAILED,
+        processedAt: new Date(),
+      });
+
+      return await failedMessage.save();
     }
   }
 

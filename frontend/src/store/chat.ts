@@ -14,11 +14,13 @@ interface ChatState {
   setCurrentChat: (chat: Chat | null) => void
   setMessages: (messages: Message[]) => void
   addMessage: (message: Message) => void
+  replaceMessage: (oldId: string, newMessage: Message) => void
   setLoadingChats: (loading: boolean) => void
   setLoadingMessages: (loading: boolean) => void
   setSendingMessage: (sending: boolean) => void
   addChat: (chat: Chat) => void
   clearChat: () => void
+  clearMessages: () => void
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -35,6 +37,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
   addMessage: (message) => set((state) => ({ 
     messages: [...state.messages, message] 
   })),
+  replaceMessage: (oldId, newMessage) => set((state) => ({
+    messages: state.messages.map(msg => msg.id === oldId ? newMessage : msg)
+  })),
   setLoadingChats: (isLoadingChats) => set({ isLoadingChats }),
   setLoadingMessages: (isLoadingMessages) => set({ isLoadingMessages }),
   setSendingMessage: (isSendingMessage) => set({ isSendingMessage }),
@@ -45,4 +50,5 @@ export const useChatStore = create<ChatState>((set, get) => ({
     currentChat: null, 
     messages: [] 
   }),
+  clearMessages: () => set({ messages: [] }),
 }))

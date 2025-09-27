@@ -18,9 +18,19 @@ export default function ChatPage() {
   const router = useRouter()
   const chatId = params.id as string
   const { user, signOut } = useAuth()
-  const { data: messages, isLoading: isLoadingMessages } = useMessages(chatId)
+  const { data: apiMessages, isLoading: isLoadingMessages } = useMessages(chatId)
   const sendMessageMutation = useSendMessage(chatId)
-  const { currentChat, isSendingMessage } = useChatStore()
+  const { currentChat, isSendingMessage, messages: storeMessages, clearMessages } = useChatStore()
+  
+  // Clear store messages when switching chats
+  useEffect(() => {
+    if (apiMessages && apiMessages.length > 0) {
+      clearMessages()
+    }
+  }, [chatId, clearMessages])
+  
+  // Use store messages if available, fallback to API messages
+  const messages = storeMessages.length > 0 ? storeMessages.filter(msg => msg.chatId === chatId) : apiMessages
   const [messageText, setMessageText] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -133,7 +143,14 @@ export default function ChatPage() {
                       }`}
                     >
                       <div className="whitespace-pre-wrap">
-                        {message.content}
+                        {message.content === '...' || message.content === 'AI is thinking...' ? (
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span className="text-sm">AI is thinking...</span>
+                          </div>
+                        ) : (
+                          message.content
+                        )}
                       </div>
                       <div
                         className={`text-xs mt-2 ${

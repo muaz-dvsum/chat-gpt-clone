@@ -14,31 +14,38 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useAuth } from '@/hooks/useAuth'
-import { useChats, useCreateChat } from '@/hooks/useChat'
+import { useChats, useStartNewChat } from '@/hooks/useChat'
 import { useChatStore } from '@/store/chat'
-import { MessageSquare, Plus, User, LogOut, Settings } from 'lucide-react'
+import { MessageSquare, Plus, User, LogOut, Settings, Send } from 'lucide-react'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 
 export default function DashboardPage() {
   const { user, signOut } = useAuth()
   const { data: chats, isLoading: isLoadingChats } = useChats()
-  const createChatMutation = useCreateChat()
-  const { currentChat, setCurrentChat, clearChat } = useChatStore()
+  const startNewChatMutation = useStartNewChat()
+  const { currentChat, setCurrentChat, clearChat, isSendingMessage } = useChatStore()
   const router = useRouter()
-  const [newChatTitle, setNewChatTitle] = useState('')
+  const [newMessage, setNewMessage] = useState('')
 
-  const handleCreateChat = async () => {
-    if (!newChatTitle.trim()) return
+  const handleStartNewChat = async () => {
+    if (!newMessage.trim() || isSendingMessage) return
+
+    const message = newMessage.trim()
+    setNewMessage('')
 
     try {
-      const newChat = await createChatMutation.mutateAsync({
-        title: newChatTitle.trim(),
+      const result = await startNewChatMutation.mutateAsync({
+        content: message,
       })
-      setNewChatTitle('')
-      setCurrentChat(newChat)
-      router.push(`/chat/${newChat.id}`)
+      
+      // The mutation already adds to store, just navigate
+      if (result?.chat) {
+        setCurrentChat(result.chat)
+        router.push(`/chat/${result.chat.id}`)
+      }
     } catch (error) {
-      console.error('Failed to create chat:', error)
+      console.error('Failed to start new chat:', error)
+      setNewMessage(message) // Restore message on error
     }
   }
 
@@ -98,11 +105,10 @@ export default function DashboardPage() {
           <div className="p-4">
             <Button 
               onClick={() => {
-                setNewChatTitle('New Chat')
-                handleCreateChat()
+                clearChat()
+                router.push('/dashboard')
               }}
-              disabled={createChatMutation.isPending}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white cursor-pointer disabled:cursor-not-allowed"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
             >
               <Plus className="mr-2 h-4 w-4" />
               New Chat
@@ -167,20 +173,31 @@ export default function DashboardPage() {
             <p className="text-gray-600 mb-8 leading-relaxed">
               Start a conversation and explore the power of AI. Select an existing chat from the sidebar or create a new one to begin.
             </p>
-            <div className="space-y-3">
-              <Button 
-                onClick={() => {
-                  setNewChatTitle('New Chat')
-                  handleCreateChat()
-                }}
-                disabled={createChatMutation.isPending}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 text-lg font-medium cursor-pointer disabled:cursor-not-allowed"
-              >
-                <Plus className="mr-2 h-5 w-5" />
-                Start New Chat
-              </Button>
-              <p className="text-sm text-gray-500">
-                Or select a conversation from the sidebar
+            <div className="space-y-4">
+              <form onSubmit={(e) => {
+                e.preventDefault()
+                handleStartNewChat()
+              }}>
+                <div className="flex gap-3">
+                  <Input
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    placeholder="Start a new conversation..."
+                    disabled={isSendingMessage}
+                    className="flex-1 text-lg py-6"
+                    autoFocus
+                  />
+                  <Button
+                    type="submit"
+                    disabled={!newMessage.trim() || isSendingMessage}
+                    className="bg-blue-600 hover:bg-blue-700 px-6 py-6"
+                  >
+                    <Send className="h-5 w-5" />
+                  </Button>
+                </div>
+              </form>
+              <p className="text-sm text-gray-500 text-center">
+                Type your message and press Send to start a new conversation
               </p>
             </div>
           </div>

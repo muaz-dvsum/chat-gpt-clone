@@ -14,8 +14,8 @@ export class LlmService {
   private readonly maxDelay: number;
 
   constructor(private readonly configService: ConfigService) {
-    this.minDelay = this.configService.get<number>('llm.minDelay', 10000);
-    this.maxDelay = this.configService.get<number>('llm.maxDelay', 20000);
+    this.minDelay = this.configService.get<number>('llm.minDelay', 2000);
+    this.maxDelay = this.configService.get<number>('llm.maxDelay', 5000);
   }
 
   async generateResponse(userMessage: string): Promise<LLMResponse> {

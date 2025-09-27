@@ -60,6 +60,15 @@ export const messageApi = {
     return response.data.data
   },
 
+  // Start a new chat with first message
+  startNewChat: async (data: SendMessageDto): Promise<{ chat: Chat; userMessage: Message; assistantMessage: Message }> => {
+    const response = await apiClient.post<ApiResponse<{ chat: Chat; userMessage: Message; assistantMessage: Message }>>('/messages/new-chat', data)
+    if (!response.data.success || !response.data.data) {
+      throw new Error(response.data.message || 'Failed to start new chat')
+    }
+    return response.data.data
+  },
+
   // Update a message
   updateMessage: async (messageId: string, data: Partial<SendMessageDto>): Promise<Message> => {
     const response = await apiClient.put<ApiResponse<Message>>(`/messages/${messageId}`, data)
