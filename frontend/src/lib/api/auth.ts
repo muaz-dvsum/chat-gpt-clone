@@ -41,12 +41,12 @@ export const authApi = {
   },
 
   getProfile: async (): Promise<AuthResponse> => {
-    const response = await apiClient.get('/auth/me')
+    const response = await apiClient.get('/dev-auth/me')
     return response.data
   },
 
   signOut: async (): Promise<AuthResponse> => {
-    const response = await apiClient.post('/auth/logout')
+    const response = await apiClient.post('/dev-auth/logout')
     return response.data
   },
 }

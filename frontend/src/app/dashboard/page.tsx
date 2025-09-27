@@ -62,37 +62,32 @@ export default function DashboardPage() {
 
   return (
     <ProtectedRoute>
-      <div className="flex h-screen bg-gray-100">
+      <div className="flex h-screen bg-white">
         {/* Sidebar */}
-        <div className="w-64 bg-gray-900 text-white flex flex-col">
+        <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
           {/* Header */}
-          <div className="p-4 border-b border-gray-700">
+          <div className="p-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
-              <h1 className="text-xl font-semibold">ChatGPT Clone</h1>
+              <h1 className="text-xl font-semibold text-gray-900">ChatGPT Clone</h1>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="text-white hover:bg-gray-700">
+                  <Button variant="ghost" size="sm" className="text-gray-700 hover:bg-gray-100 cursor-pointer">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={user?.user_metadata?.avatar_url} />
-                      <AvatarFallback>
+                      <AvatarFallback className="bg-blue-600 text-white font-medium">
                         {user?.user_metadata?.name?.[0] || user?.email?.[0]?.toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem>
+                <DropdownMenuContent align="end" className="w-48 bg-white border border-gray-200 shadow-lg">
+                  <DropdownMenuItem className="text-gray-700 hover:bg-gray-50 cursor-pointer">
                     <User className="mr-2 h-4 w-4" />
                     Profile
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
+                  <DropdownMenuItem className="text-gray-700 hover:bg-gray-50 cursor-pointer">
                     <Settings className="mr-2 h-4 w-4" />
                     Settings
-                  </DropdownMenuItem>
-                  <Separator />
-                  <DropdownMenuItem onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Logout
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -101,45 +96,44 @@ export default function DashboardPage() {
 
           {/* New Chat */}
           <div className="p-4">
-            <div className="flex gap-2">
-              <Input
-                placeholder="New chat title..."
-                value={newChatTitle}
-                onChange={(e) => setNewChatTitle(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleCreateChat()}
-                className="bg-gray-800 border-gray-600 text-white placeholder:text-gray-400"
-              />
-              <Button 
-                onClick={handleCreateChat}
-                disabled={!newChatTitle.trim() || createChatMutation.isPending}
-                size="sm"
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
+            <Button 
+              onClick={() => {
+                setNewChatTitle('New Chat')
+                handleCreateChat()
+              }}
+              disabled={createChatMutation.isPending}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white cursor-pointer disabled:cursor-not-allowed"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              New Chat
+            </Button>
           </div>
 
           {/* Chat List */}
           <ScrollArea className="flex-1 px-4">
-            <div className="space-y-2">
+            <div className="space-y-1">
               {isLoadingChats ? (
-                <div className="text-center text-gray-400 mt-4">
+                <div className="text-center text-gray-500 mt-4">
                   Loading chats...
                 </div>
               ) : chats?.length === 0 ? (
-                <div className="text-center text-gray-400 mt-4">
+                <div className="text-center text-gray-500 mt-4 text-sm">
                   No chats yet. Create your first chat!
                 </div>
               ) : (
                 chats?.map((chat) => (
                   <Button
                     key={chat.id}
-                    variant={currentChat?.id === chat.id ? "secondary" : "ghost"}
-                    className="w-full justify-start text-left p-3 h-auto text-white hover:bg-gray-700"
+                    variant="ghost"
+                    className={`w-full justify-start text-left p-3 h-auto text-gray-700 hover:bg-gray-100 cursor-pointer ${
+                      currentChat?.id === chat.id 
+                        ? 'bg-gray-100 border-r-2 border-blue-600' 
+                        : ''
+                    }`}
                     onClick={() => handleChatSelect(chat.id)}
                   >
-                    <MessageSquare className="mr-2 h-4 w-4" />
-                    <div className="truncate">
+                    <MessageSquare className="mr-3 h-4 w-4 text-gray-500" />
+                    <div className="truncate text-sm">
                       {chat.title}
                     </div>
                   </Button>
@@ -147,25 +141,48 @@ export default function DashboardPage() {
               )}
             </div>
           </ScrollArea>
+
+          {/* Logout Button at Bottom */}
+          <div className="p-4 border-t border-gray-200">
+            <Button
+              onClick={handleLogout}
+              variant="ghost"
+              className="w-full justify-start text-red-600 hover:bg-red-50 hover:text-red-700 cursor-pointer"
+            >
+              <LogOut className="mr-3 h-4 w-4" />
+              Logout
+            </Button>
+          </div>
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <MessageSquare className="h-24 w-24 text-gray-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-semibold text-gray-700 mb-2">
+        <div className="flex-1 flex items-center justify-center bg-white">
+          <div className="text-center max-w-md">
+            <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <MessageSquare className="h-10 w-10 text-blue-600" />
+            </div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-3">
               Welcome to ChatGPT Clone
             </h2>
-            <p className="text-gray-500 mb-6">
-              Select a chat from the sidebar or create a new one to get started.
+            <p className="text-gray-600 mb-8 leading-relaxed">
+              Start a conversation and explore the power of AI. Select an existing chat from the sidebar or create a new one to begin.
             </p>
-            <Button 
-              onClick={() => setNewChatTitle('New Chat')}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Start New Chat
-            </Button>
+            <div className="space-y-3">
+              <Button 
+                onClick={() => {
+                  setNewChatTitle('New Chat')
+                  handleCreateChat()
+                }}
+                disabled={createChatMutation.isPending}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 text-lg font-medium cursor-pointer disabled:cursor-not-allowed"
+              >
+                <Plus className="mr-2 h-5 w-5" />
+                Start New Chat
+              </Button>
+              <p className="text-sm text-gray-500">
+                Or select a conversation from the sidebar
+              </p>
+            </div>
           </div>
         </div>
       </div>

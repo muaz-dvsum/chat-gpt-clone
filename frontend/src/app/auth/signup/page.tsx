@@ -81,7 +81,7 @@ export default function SignupPage() {
             Already have an account?{' '}
             <Link
               href="/auth/login"
-              className="font-medium text-blue-600 hover:text-blue-500"
+              className="font-medium text-blue-600 hover:text-blue-500 cursor-pointer"
             >
               Sign in here
             </Link>
@@ -157,7 +157,7 @@ export default function SignupPage() {
           <div className="space-y-4">
             <Button
               type="submit"
-              className="w-full"
+              className="w-full cursor-pointer"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -177,7 +177,7 @@ export default function SignupPage() {
             <Button
               type="button"
               variant="outline"
-              className="w-full"
+              className="w-full cursor-pointer"
               onClick={handleGoogleSignup}
               disabled={isLoading}
             >

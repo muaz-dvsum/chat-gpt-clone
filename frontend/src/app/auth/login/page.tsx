@@ -56,7 +56,7 @@ export default function LoginPage() {
             Sign in to your account or{' '}
             <Link
               href="/auth/signup"
-              className="font-medium text-blue-600 hover:text-blue-500"
+              className="font-medium text-blue-600 hover:text-blue-500 cursor-pointer"
             >
               create a new account
             </Link>
@@ -104,7 +104,7 @@ export default function LoginPage() {
           <div className="space-y-4">
             <Button
               type="submit"
-              className="w-full"
+              className="w-full cursor-pointer"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -124,7 +124,7 @@ export default function LoginPage() {
             <Button
               type="button"
               variant="outline"
-              className="w-full"
+              className="w-full cursor-pointer"
               onClick={handleGoogleLogin}
               disabled={isLoading}
             >
